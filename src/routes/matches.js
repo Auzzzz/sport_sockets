@@ -12,36 +12,32 @@ matchRouter.get('/', async (req, res) => {
     const parsed = listMatchesQuerySchema.safeParse(req.query);
 
     if (!parsed.success) {
-        return res.status(400).json({ error: "invalid query", errors: JSON.stringify(parsed.error) });
+        return res.status(400).json({ error: "invalid query", errors: JSON.stringify(parsed.error.issues) });
     }
 
     const limit = Math.min(parsed.data.limit ?? 50, MAX_LIMIT);
 
     try {
         const data = await db.select()
-        .from(matches)
-        .orderBy((desc(matches.createdAt)))
-        .limit(limit);
+            .from(matches)
+            .orderBy((desc(matches.createdAt)))
+            .limit(limit);
 
         return res.status(200).json({ data });
-    } catch (error) {   
+    } catch (error) {
         return res.status(500).json({ error: "failed to fetch matches", details: JSON.stringify(error.message) });
     }
 
-
-
-    res.status(200).send('Match route is working');
 });
 
 matchRouter.post('/', async (req, res) => {
     const parsed = createMatchSchema.safeParse(req.body);
 
     if (!parsed.success) {
-        return res.status(400).json({ error: "invalid input", errors: JSON.stringify(parsed.error) });
+        return res.status(400).json({ error: "invalid input", errors: JSON.stringify(parsed.error.issues) });
     }
 
-    const { sport, homeTeam, awayTeam, startTime, endTime, homeScore, awayScore } = parsed.data;
-
+    const { startTime, endTime, homeScore, awayScore } = parsed.data;
     try {
         const [event] = await db.insert(matches).values({
             ...parsed.data,
